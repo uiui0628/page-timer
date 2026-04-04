@@ -195,6 +195,49 @@
     margin-top: 1rem;
     text-align: center;
   }
+
+  .progress-section {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.75rem;
+  }
+  .progress-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .progress-pages {
+    font-size: 13px;
+    color: var(--text2);
+    font-variant-numeric: tabular-nums;
+  }
+  .progress-track {
+    width: 100%;
+    height: 10px;
+    background: var(--surface2);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: var(--green-text);
+    border-radius: 999px;
+    width: 0%;
+    transition: width 1s linear;
+  }
+  .progress-bar.paused {
+    background: var(--text3);
+  }
 </style>
 </head>
 <body>
@@ -235,6 +278,16 @@
   <button class="btn start" id="btn-start" onclick="doStart()">▶ スタート</button>
   <button class="btn stop" id="btn-stop" onclick="doStop()" disabled>■ 休憩</button>
   <button class="btn" id="btn-reset" onclick="doReset()">↺ リセット</button>
+</div>
+
+<div class="progress-section">
+  <div class="progress-header">
+    <span class="progress-label">進捗</span>
+    <span class="progress-pages" id="progress-pages">-- / -- ページ</span>
+  </div>
+  <div class="progress-track">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
 </div>
 
 <div class="cards">
@@ -314,10 +367,18 @@ function render() {
     const remainWork = Math.max(0, baseMs - workMs);
     document.getElementById('rem-time').textContent = fmtMs(remainWork + pauseMs, true);
     document.getElementById('finish-time').textContent = fmt(new Date(nowMs + remainWork + pauseMs));
+
+    const pct = Math.min(100, (workMs / baseMs) * 100);
+    const estimatedPage = Math.min(end, Math.floor(cur + (workMs / baseMs) * remPages));
+    document.getElementById('progress-bar').style.width = pct.toFixed(1) + '%';
+    document.getElementById('progress-bar').className = 'progress-bar' + (!running && pauseStartAt !== null ? ' paused' : '');
+    document.getElementById('progress-pages').textContent = estimatedPage + ' / ' + end + ' ページ';
   } else {
     document.getElementById('rem-pages').textContent = '--';
     document.getElementById('rem-time').textContent = '--';
     document.getElementById('finish-time').textContent = '-- : -- : --';
+    document.getElementById('progress-bar').style.width = '0%';
+    document.getElementById('progress-pages').textContent = '-- / -- ページ';
   }
 }
 

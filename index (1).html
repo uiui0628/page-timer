@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ページタイマー</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface2: #eeede9;
+    --text: #1a1a18;
+    --text2: #6b6b67;
+    --text3: #9b9b97;
+    --green-bg: #e8f5e9;
+    --green-text: #2e7d32;
+    --green-border: #a5d6a7;
+    --red-bg: #fdecea;
+    --red-text: #c62828;
+    --red-border: #ef9a9a;
+    --border: rgba(0,0,0,0.08);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  h1 {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .clock {
+    font-size: clamp(36px, 10vw, 52px);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    margin-bottom: 2rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .section {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.875rem;
+  }
+  .input-row:last-child { margin-bottom: 0; }
+
+  .input-row label {
+    font-size: 14px;
+    color: var(--text2);
+    flex: 1;
+  }
+
+  .input-row input {
+    width: 80px;
+    padding: 8px 10px;
+    font-size: 15px;
+    font-family: inherit;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
+    color: var(--text);
+    text-align: right;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  .input-row input:focus {
+    border-color: rgba(0,0,0,0.25);
+    background: #fff;
+  }
+
+  .input-row span {
+    font-size: 13px;
+    color: var(--text3);
+    width: 50px;
+  }
+
+  .formula {
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 0.5px solid var(--border);
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 14px 8px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: inherit;
+    border-radius: var(--radius);
+    cursor: pointer;
+    border: 0.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    transition: opacity 0.15s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:active { transform: scale(0.97); opacity: 0.8; }
+  .btn:disabled { opacity: 0.3; cursor: default; }
+
+  .btn.start {
+    background: var(--green-bg);
+    color: var(--green-text);
+    border-color: var(--green-border);
+  }
+  .btn.stop {
+    background: var(--red-bg);
+    color: var(--red-text);
+    border-color: var(--red-border);
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .card {
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+  }
+  .card.wide { grid-column: 1 / -1; background: var(--surface); border: 0.5px solid var(--border); }
+
+  .card-label {
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 6px;
+    letter-spacing: 0.03em;
+  }
+
+  .card-value {
+    font-size: clamp(18px, 5vw, 22px);
+    font-weight: 500;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .card-value.lg { font-size: clamp(22px, 6vw, 28px); }
+
+  .card-unit {
+    font-size: 12px;
+    color: var(--text3);
+    margin-left: 2px;
+  }
+
+  .card-status {
+    font-size: 11px;
+    margin-top: 4px;
+  }
+  .card-status.running { color: var(--green-text); }
+  .card-status.paused { color: var(--red-text); }
+
+  .note {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 1rem;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>現在時刻</h1>
+<div class="clock" id="clock">--:--:--</div>
+
+<div class="section">
+  <div class="section-title">ページ設定</div>
+  <div class="input-row">
+    <label>現在のページ</label>
+    <input type="number" id="cur" min="1" placeholder="10" inputmode="numeric">
+    <span>ページ</span>
+  </div>
+  <div class="input-row">
+    <label>終わりのページ</label>
+    <input type="number" id="end" min="1" placeholder="110" inputmode="numeric">
+    <span>ページ</span>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">ペース設定</div>
+  <div class="input-row">
+    <label>1問あたりのページ数</label>
+    <input type="number" id="pages-per-q" min="1" value="2" inputmode="numeric">
+    <span>ページ/問</span>
+  </div>
+  <div class="input-row">
+    <label>1問あたりの時間</label>
+    <input type="number" id="min-per-q" min="1" value="5" inputmode="numeric">
+    <span>分/問</span>
+  </div>
+  <div class="formula" id="formula">計算式: ページ数 ÷ 2 × 5分</div>
+</div>
+
+<div class="btn-row">
+  <button class="btn start" id="btn-start" onclick="doStart()">▶ スタート</button>
+  <button class="btn stop" id="btn-stop" onclick="doStop()" disabled>■ 休憩</button>
+  <button class="btn" id="btn-reset" onclick="doReset()">↺ リセット</button>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="card-label">残りページ数</div>
+    <div class="card-value"><span id="rem-pages">--</span><span class="card-unit">ページ</span></div>
+  </div>
+  <div class="card">
+    <div class="card-label">残り時間</div>
+    <div class="card-value"><span id="rem-time">--</span></div>
+  </div>
+  <div class="card">
+    <div class="card-label">累計休憩時間</div>
+    <div class="card-value"><span id="pause-total">0分</span></div>
+    <div class="card-status paused" id="pause-status"></div>
+  </div>
+  <div class="card">
+    <div class="card-label">経過（実働）時間</div>
+    <div class="card-value"><span id="elapsed">0分</span></div>
+    <div class="card-status running" id="run-status"></div>
+  </div>
+  <div class="card wide">
+    <div class="card-label">終了予定時刻</div>
+    <div class="card-value lg" id="finish-time">-- : -- : --</div>
+  </div>
+</div>
+
+<div class="note">休憩中は終了予定時刻が自動で延びます</div>
+
+<script>
+function pad(n) { return String(n).padStart(2, '0'); }
+function fmt(d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); }
+function fmtMs(ms, ceil) {
+  const totalMin = ceil ? Math.ceil(ms / 60000) : Math.floor(ms / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h === 0) return m + '分';
+  return h + '時間' + m + '分';
+}
+
+let running = false, startedAt = null, elapsedMs = 0;
+let pauseStartAt = null, totalPauseMs = 0, ticker = null;
+
+function getInputs() {
+  return {
+    cur: parseInt(document.getElementById('cur').value),
+    end: parseInt(document.getElementById('end').value),
+    ppq: parseFloat(document.getElementById('pages-per-q').value),
+    mpq: parseFloat(document.getElementById('min-per-q').value),
+  };
+}
+
+function render() {
+  const now = new Date();
+  document.getElementById('clock').textContent = fmt(now);
+
+  const { cur, end, ppq, mpq } = getInputs();
+  const valid = !isNaN(cur) && !isNaN(end) && !isNaN(ppq) && !isNaN(mpq) && end > cur && ppq > 0 && mpq > 0;
+
+  document.getElementById('formula').textContent =
+    '計算式: ページ数 ÷ ' + (isNaN(ppq) ? '?' : ppq) + ' × ' + (isNaN(mpq) ? '?' : mpq) + '分';
+
+  const nowMs = now.getTime();
+  const workMs = running ? elapsedMs + (nowMs - startedAt) : elapsedMs;
+  const pauseMs = (!running && pauseStartAt !== null)
+    ? totalPauseMs + (nowMs - pauseStartAt) : totalPauseMs;
+
+  document.getElementById('elapsed').textContent = fmtMs(workMs, false);
+  document.getElementById('pause-total').textContent = fmtMs(pauseMs, false);
+  document.getElementById('pause-status').textContent = (!running && pauseStartAt !== null) ? '休憩中...' : '';
+  document.getElementById('run-status').textContent = running ? '計測中' : '';
+
+  if (valid) {
+    const remPages = end - cur;
+    const baseMs = (remPages / ppq) * mpq * 60000;
+    document.getElementById('rem-pages').textContent = remPages;
+    const remainWork = Math.max(0, baseMs - workMs);
+    document.getElementById('rem-time').textContent = fmtMs(remainWork + pauseMs, true);
+    document.getElementById('finish-time').textContent = fmt(new Date(nowMs + remainWork + pauseMs));
+  } else {
+    document.getElementById('rem-pages').textContent = '--';
+    document.getElementById('rem-time').textContent = '--';
+    document.getElementById('finish-time').textContent = '-- : -- : --';
+  }
+}
+
+function doStart() {
+  if (running) return;
+  if (pauseStartAt !== null) { totalPauseMs += Date.now() - pauseStartAt; pauseStartAt = null; }
+  startedAt = Date.now(); running = true;
+  document.getElementById('btn-start').disabled = true;
+  document.getElementById('btn-stop').disabled = false;
+  if (!ticker) ticker = setInterval(render, 1000);
+  render();
+}
+
+function doStop() {
+  if (!running) return;
+  elapsedMs += Date.now() - startedAt; startedAt = null; running = false;
+  pauseStartAt = Date.now();
+  document.getElementById('btn-start').disabled = false;
+  document.getElementById('btn-stop').disabled = true;
+  render();
+}
+
+function doReset() {
+  running = false; startedAt = null; elapsedMs = 0;
+  pauseStartAt = null; totalPauseMs = 0;
+  clearInterval(ticker); ticker = null;
+  document.getElementById('btn-start').disabled = false;
+  document.getElementById('btn-stop').disabled = true;
+  render();
+}
+
+['cur','end','pages-per-q','min-per-q'].forEach(id => {
+  document.getElementById(id).addEventListener('input', render);
+});
+
+ticker = setInterval(render, 1000);
+render();
+</script>
+</body>
+</html>

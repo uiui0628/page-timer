@@ -6,7 +6,6 @@
 <title>ページタイマー</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
     --bg: #f5f4f0;
     --surface: #ffffff;
@@ -20,11 +19,13 @@
     --red-bg: #fdecea;
     --red-text: #c62828;
     --red-border: #ef9a9a;
+    --amber-bg: #fff8e1;
+    --amber-text: #e65100;
+    --amber-border: #ffcc80;
     --border: rgba(0,0,0,0.08);
     --radius: 12px;
     --radius-sm: 8px;
   }
-
   body {
     font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
     background: var(--bg);
@@ -32,217 +33,55 @@
     min-height: 100vh;
     padding: 1.5rem 1rem 3rem;
   }
-
-  h1 {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text3);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 0.5rem;
-  }
-
-  .clock {
-    font-size: clamp(36px, 10vw, 52px);
-    font-weight: 300;
-    letter-spacing: 0.04em;
-    color: var(--text);
-    margin-bottom: 2rem;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .section {
-    background: var(--surface);
-    border-radius: var(--radius);
-    border: 0.5px solid var(--border);
-    padding: 1.25rem;
-    margin-bottom: 1rem;
-  }
-
-  .section-title {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text3);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    margin-bottom: 1rem;
-  }
-
-  .input-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 0.875rem;
-  }
+  .time-label { font-size: 13px; font-weight: 500; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; }
+  .clock { font-size: clamp(36px, 10vw, 52px); font-weight: 300; letter-spacing: 0.04em; color: var(--text); margin-bottom: 2rem; font-variant-numeric: tabular-nums; }
+  .section { background: var(--surface); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 1.25rem; margin-bottom: 1rem; }
+  .section-title { font-size: 11px; font-weight: 500; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 1rem; }
+  .input-row { display: flex; align-items: center; gap: 10px; margin-bottom: 0.875rem; }
   .input-row:last-child { margin-bottom: 0; }
-
-  .input-row label {
-    font-size: 14px;
-    color: var(--text2);
-    flex: 1;
-  }
-
-  .input-row input {
-    width: 80px;
-    padding: 8px 10px;
-    font-size: 15px;
-    font-family: inherit;
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--surface2);
-    color: var(--text);
-    text-align: right;
-    outline: none;
-    -webkit-appearance: none;
-  }
-  .input-row input:focus {
-    border-color: rgba(0,0,0,0.25);
-    background: #fff;
-  }
-
-  .input-row span {
-    font-size: 13px;
-    color: var(--text3);
-    width: 50px;
-  }
-
-  .formula {
-    font-size: 12px;
-    color: var(--text3);
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 0.5px solid var(--border);
-  }
-
-  .btn-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 1rem;
-  }
-
-  .btn {
-    flex: 1;
-    padding: 14px 8px;
-    font-size: 15px;
-    font-weight: 500;
-    font-family: inherit;
-    border-radius: var(--radius);
-    cursor: pointer;
-    border: 0.5px solid var(--border);
-    background: var(--surface);
-    color: var(--text);
-    transition: opacity 0.15s, transform 0.1s;
-    -webkit-tap-highlight-color: transparent;
-  }
+  .input-row label { font-size: 14px; color: var(--text2); flex: 1; }
+  .input-row input { width: 80px; padding: 8px 10px; font-size: 15px; font-family: inherit; border: 0.5px solid var(--border); border-radius: var(--radius-sm); background: var(--surface2); color: var(--text); text-align: right; outline: none; -webkit-appearance: none; }
+  .input-row input:focus { border-color: rgba(0,0,0,0.25); background: #fff; }
+  .input-row span { font-size: 13px; color: var(--text3); width: 50px; }
+  .formula { font-size: 12px; color: var(--text3); margin-top: 0.75rem; padding-top: 0.75rem; border-top: 0.5px solid var(--border); }
+  .btn-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+  .btn { flex: 1; padding: 14px 8px; font-size: 15px; font-weight: 500; font-family: inherit; border-radius: var(--radius); cursor: pointer; border: 0.5px solid var(--border); background: var(--surface); color: var(--text); transition: opacity 0.15s, transform 0.1s; -webkit-tap-highlight-color: transparent; }
   .btn:active { transform: scale(0.97); opacity: 0.8; }
   .btn:disabled { opacity: 0.3; cursor: default; }
+  .btn.start { background: var(--green-bg); color: var(--green-text); border-color: var(--green-border); }
+  .btn.stop  { background: var(--red-bg);   color: var(--red-text);   border-color: var(--red-border); }
 
-  .btn.start {
-    background: var(--green-bg);
-    color: var(--green-text);
-    border-color: var(--green-border);
-  }
-  .btn.stop {
-    background: var(--red-bg);
-    color: var(--red-text);
-    border-color: var(--red-border);
-  }
+  .now-card { background: var(--amber-bg); border: 0.5px solid var(--amber-border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
+  .now-card-title { font-size: 11px; font-weight: 500; color: var(--amber-text); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.5rem; }
+  .now-card-body { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .now-page { font-size: clamp(28px, 8vw, 38px); font-weight: 500; color: var(--amber-text); font-variant-numeric: tabular-nums; }
+  .now-page-unit { font-size: 14px; color: var(--amber-text); }
+  .now-time { font-size: 14px; color: var(--amber-text); background: rgba(230,81,0,0.08); border-radius: 6px; padding: 3px 8px; margin-left: 4px; }
 
-  .cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
+  .progress-section { background: var(--surface); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 1.25rem; margin-bottom: 1rem; }
+  .progress-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.75rem; }
+  .progress-label { font-size: 11px; font-weight: 500; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; }
+  .progress-pages { font-size: 13px; color: var(--text2); font-variant-numeric: tabular-nums; }
+  .progress-track { width: 100%; height: 10px; background: var(--surface2); border-radius: 999px; overflow: hidden; }
+  .progress-bar { height: 100%; background: var(--green-text); border-radius: 999px; width: 0%; transition: width 1s linear; }
+  .progress-bar.paused { background: var(--text3); }
 
-  .card {
-    background: var(--surface2);
-    border-radius: var(--radius-sm);
-    padding: 14px;
-  }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .card { background: var(--surface2); border-radius: var(--radius-sm); padding: 14px; }
   .card.wide { grid-column: 1 / -1; background: var(--surface); border: 0.5px solid var(--border); }
-
-  .card-label {
-    font-size: 11px;
-    color: var(--text3);
-    margin-bottom: 6px;
-    letter-spacing: 0.03em;
-  }
-
-  .card-value {
-    font-size: clamp(18px, 5vw, 22px);
-    font-weight: 500;
-    color: var(--text);
-    font-variant-numeric: tabular-nums;
-  }
+  .card-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; letter-spacing: 0.03em; }
+  .card-value { font-size: clamp(18px, 5vw, 22px); font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; }
   .card-value.lg { font-size: clamp(22px, 6vw, 28px); }
-
-  .card-unit {
-    font-size: 12px;
-    color: var(--text3);
-    margin-left: 2px;
-  }
-
-  .card-status {
-    font-size: 11px;
-    margin-top: 4px;
-  }
+  .card-unit { font-size: 12px; color: var(--text3); margin-left: 2px; }
+  .card-status { font-size: 11px; margin-top: 4px; }
   .card-status.running { color: var(--green-text); }
-  .card-status.paused { color: var(--red-text); }
-
-  .note {
-    font-size: 11px;
-    color: var(--text3);
-    margin-top: 1rem;
-    text-align: center;
-  }
-
-  .progress-section {
-    background: var(--surface);
-    border-radius: var(--radius);
-    border: 0.5px solid var(--border);
-    padding: 1.25rem;
-    margin-bottom: 1rem;
-  }
-  .progress-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 0.75rem;
-  }
-  .progress-label {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text3);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-  .progress-pages {
-    font-size: 13px;
-    color: var(--text2);
-    font-variant-numeric: tabular-nums;
-  }
-  .progress-track {
-    width: 100%;
-    height: 10px;
-    background: var(--surface2);
-    border-radius: 999px;
-    overflow: hidden;
-  }
-  .progress-bar {
-    height: 100%;
-    background: var(--green-text);
-    border-radius: 999px;
-    width: 0%;
-    transition: width 1s linear;
-  }
-  .progress-bar.paused {
-    background: var(--text3);
-  }
+  .card-status.paused  { color: var(--red-text); }
+  .note { font-size: 11px; color: var(--text3); margin-top: 1rem; text-align: center; }
 </style>
 </head>
 <body>
 
-<h1>現在時刻</h1>
+<div class="time-label">現在時刻</div>
 <div class="clock" id="clock">--:--:--</div>
 
 <div class="section">
@@ -260,24 +99,30 @@
 </div>
 
 <div class="section">
-  <div class="section-title">ペース設定</div>
-  <div class="input-row">
-    <label>1問あたりのページ数</label>
-    <input type="number" id="pages-per-q" min="1" value="2" inputmode="numeric">
-    <span>ページ/問</span>
-  </div>
+  <div class="section-title">ペース設定（2ページ / 問 固定）</div>
   <div class="input-row">
     <label>1問あたりの時間</label>
     <input type="number" id="min-per-q" min="1" value="5" inputmode="numeric">
-    <span>分/問</span>
+    <span>分 / 問</span>
   </div>
   <div class="formula" id="formula">計算式: ページ数 ÷ 2 × 5分</div>
 </div>
 
 <div class="btn-row">
   <button class="btn start" id="btn-start" onclick="doStart()">▶ スタート</button>
-  <button class="btn stop" id="btn-stop" onclick="doStop()" disabled>■ 休憩</button>
-  <button class="btn" id="btn-reset" onclick="doReset()">↺ リセット</button>
+  <button class="btn stop"  id="btn-stop"  onclick="doStop()"  disabled>■ 休憩</button>
+  <button class="btn"       id="btn-reset" onclick="doReset()">↺ リセット</button>
+</div>
+
+<div class="now-card">
+  <div class="now-card-title">今やるべきページ</div>
+  <div class="now-card-body">
+    <span class="now-page" id="now-page">--</span>
+    <span class="now-page-unit">〜</span>
+    <span class="now-page" id="now-page-end">--</span>
+    <span class="now-page-unit">ページ</span>
+    <span class="now-time" id="now-time-left">あと -- 分</span>
+  </div>
 </div>
 
 <div class="progress-section">
@@ -318,6 +163,7 @@
 <div class="note">休憩中は終了予定時刻が自動で延びます</div>
 
 <script>
+const PPQ = 2;
 function pad(n) { return String(n).padStart(2, '0'); }
 function fmt(d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); }
 function fmtMs(ms, ceil) {
@@ -335,7 +181,6 @@ function getInputs() {
   return {
     cur: parseInt(document.getElementById('cur').value),
     end: parseInt(document.getElementById('end').value),
-    ppq: parseFloat(document.getElementById('pages-per-q').value),
     mpq: parseFloat(document.getElementById('min-per-q').value),
   };
 }
@@ -344,41 +189,67 @@ function render() {
   const now = new Date();
   document.getElementById('clock').textContent = fmt(now);
 
-  const { cur, end, ppq, mpq } = getInputs();
-  const valid = !isNaN(cur) && !isNaN(end) && !isNaN(ppq) && !isNaN(mpq) && end > cur && ppq > 0 && mpq > 0;
+  const { cur, end, mpq } = getInputs();
+  const valid = !isNaN(cur) && !isNaN(end) && !isNaN(mpq) && end > cur && mpq > 0;
 
   document.getElementById('formula').textContent =
-    '計算式: ページ数 ÷ ' + (isNaN(ppq) ? '?' : ppq) + ' × ' + (isNaN(mpq) ? '?' : mpq) + '分';
+    '計算式: ページ数 ÷ 2 × ' + (isNaN(mpq) ? '?' : mpq) + '分';
 
   const nowMs = now.getTime();
   const workMs = running ? elapsedMs + (nowMs - startedAt) : elapsedMs;
   const pauseMs = (!running && pauseStartAt !== null)
     ? totalPauseMs + (nowMs - pauseStartAt) : totalPauseMs;
+  const isPaused = !running && pauseStartAt !== null;
 
   document.getElementById('elapsed').textContent = fmtMs(workMs, false);
   document.getElementById('pause-total').textContent = fmtMs(pauseMs, false);
-  document.getElementById('pause-status').textContent = (!running && pauseStartAt !== null) ? '休憩中...' : '';
+  document.getElementById('pause-status').textContent = isPaused ? '休憩中...' : '';
   document.getElementById('run-status').textContent = running ? '計測中' : '';
 
   if (valid) {
     const remPages = end - cur;
-    const baseMs = (remPages / ppq) * mpq * 60000;
+    const msPerQ  = mpq * 60000;
+    const baseMs  = (remPages / PPQ) * msPerQ;
+
     document.getElementById('rem-pages').textContent = remPages;
     const remainWork = Math.max(0, baseMs - workMs);
     document.getElementById('rem-time').textContent = fmtMs(remainWork + pauseMs, true);
     document.getElementById('finish-time').textContent = fmt(new Date(nowMs + remainWork + pauseMs));
 
+    // 進捗バー
     const pct = Math.min(100, (workMs / baseMs) * 100);
-    const estimatedPage = Math.min(end, Math.floor(cur + (workMs / baseMs) * remPages));
+    const estimatedPage = Math.min(end, cur + Math.floor((workMs / baseMs) * remPages));
     document.getElementById('progress-bar').style.width = pct.toFixed(1) + '%';
-    document.getElementById('progress-bar').className = 'progress-bar' + (!running && pauseStartAt !== null ? ' paused' : '');
+    document.getElementById('progress-bar').className = 'progress-bar' + (isPaused ? ' paused' : '');
     document.getElementById('progress-pages').textContent = estimatedPage + ' / ' + end + ' ページ';
+
+    // 今やるべきページ
+    const qIndex       = Math.floor(workMs / msPerQ);
+    const nowPageStart = cur + qIndex * PPQ;
+    const nowPageEnd   = Math.min(end, nowPageStart + PPQ - 1);
+    const leftInQ  = Math.max(0, msPerQ - (workMs % msPerQ));
+    const leftMin  = Math.floor(leftInQ / 60000);
+    const leftSec  = Math.floor((leftInQ % 60000) / 1000);
+
+    if (nowPageStart < end) {
+      document.getElementById('now-page').textContent     = nowPageStart;
+      document.getElementById('now-page-end').textContent = nowPageEnd;
+      document.getElementById('now-time-left').textContent = isPaused ? '休憩中' : 'あと ' + leftMin + '分' + pad(leftSec) + '秒';
+    } else {
+      document.getElementById('now-page').textContent     = '完了';
+      document.getElementById('now-page-end').textContent = '';
+      document.getElementById('now-time-left').textContent = '';
+    }
+
   } else {
     document.getElementById('rem-pages').textContent = '--';
-    document.getElementById('rem-time').textContent = '--';
+    document.getElementById('rem-time').textContent  = '--';
     document.getElementById('finish-time').textContent = '-- : -- : --';
     document.getElementById('progress-bar').style.width = '0%';
     document.getElementById('progress-pages').textContent = '-- / -- ページ';
+    document.getElementById('now-page').textContent     = '--';
+    document.getElementById('now-page-end').textContent = '--';
+    document.getElementById('now-time-left').textContent = 'あと -- 分';
   }
 }
 
@@ -387,33 +258,30 @@ function doStart() {
   if (pauseStartAt !== null) { totalPauseMs += Date.now() - pauseStartAt; pauseStartAt = null; }
   startedAt = Date.now(); running = true;
   document.getElementById('btn-start').disabled = true;
-  document.getElementById('btn-stop').disabled = false;
+  document.getElementById('btn-stop').disabled  = false;
   if (!ticker) ticker = setInterval(render, 1000);
   render();
 }
-
 function doStop() {
   if (!running) return;
   elapsedMs += Date.now() - startedAt; startedAt = null; running = false;
   pauseStartAt = Date.now();
   document.getElementById('btn-start').disabled = false;
-  document.getElementById('btn-stop').disabled = true;
+  document.getElementById('btn-stop').disabled  = true;
   render();
 }
-
 function doReset() {
   running = false; startedAt = null; elapsedMs = 0;
   pauseStartAt = null; totalPauseMs = 0;
   clearInterval(ticker); ticker = null;
   document.getElementById('btn-start').disabled = false;
-  document.getElementById('btn-stop').disabled = true;
+  document.getElementById('btn-stop').disabled  = true;
   render();
 }
 
-['cur','end','pages-per-q','min-per-q'].forEach(id => {
+['cur','end','min-per-q'].forEach(id => {
   document.getElementById(id).addEventListener('input', render);
 });
-
 ticker = setInterval(render, 1000);
 render();
 </script>

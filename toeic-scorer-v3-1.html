@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOEIC 翻訳採点 v3</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Outfit:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg: #f7f4ef;
+  --surface: #ffffff;
+  --surface2: #f0ece4;
+  --ink: #1c1917;
+  --muted: #78716c;
+  --border: #d6cfc4;
+  --red: #b91c1c;
+  --green: #15803d;
+  --blue: #1d4ed8;
+  --amber: #b45309;
+  --purple: #7c3aed;
+  --shadow: 0 2px 16px rgba(28,25,23,0.09);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+/* HEADER */
+.header {
+  background: var(--ink);
+  padding: 20px 20px 18px;
+}
+.header-inner {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.header h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.4rem, 4vw, 1.9rem);
+  color: #f7f4ef;
+  letter-spacing: -0.01em;
+}
+.header h1 em { font-style: italic; color: #fbbf24; }
+.header-sub {
+  font-size: 0.74rem;
+  color: #78716c;
+  line-height: 1.5;
+  text-align: right;
+}
+
+/* WRAP */
+.wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+/* LABEL */
+.lbl {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lbl::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* CARD */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+
+/* ROW */
+.row { display:flex; gap:10px; flex-wrap:wrap; }
+.row > * { flex:1; min-width:130px; }
+
+select, input[type=number] {
+  width:100%;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--ink);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color .18s;
+}
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2378716c' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+  cursor: pointer;
+}
+select:focus, input[type=number]:focus { border-color: var(--blue); }
+
+/* IMAGE UPLOAD */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: border-color .2s, background .2s;
+  background: var(--surface2);
+}
+.upload-zone:hover, .upload-zone.over {
+  border-color: var(--blue);
+  background: #eff6ff;
+}
+.upload-zone input[type=file] {
+  position: absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;
+}
+.upload-icon { font-size: 2.2rem; margin-bottom: 8px; }
+.upload-hint { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+.upload-hint strong { color: var(--blue); }
+#previewWrap { margin-top: 14px; display:none; position:relative; }
+#previewImg { width:100%; border-radius:8px; border:1px solid var(--border); display:block; }
+.preview-clear {
+  position: absolute; top:8px; right:8px;
+  background: rgba(28,25,23,0.7); color:#fff;
+  border:none; border-radius:50%; width:28px; height:28px;
+  cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center;
+}
+
+/* TEXTAREA */
+textarea {
+  width:100%;
+  background: transparent;
+  border: none;
+  color: var(--ink);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  font-weight: 300;
+  resize: vertical;
+  outline: none;
+}
+textarea::placeholder { color: #c4bcb4; }
+
+/* BTN */
+.btn-primary {
+  width: 100%;
+  padding: 15px;
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  border-radius: 10px;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: opacity .18s, transform .1s;
+  letter-spacing: 0.02em;
+}
+.btn-primary:hover { opacity: .88; }
+.btn-primary:active { transform: scale(.99); }
+.btn-primary:disabled { opacity: .35; cursor: not-allowed; }
+
+/* LOADING */
+.loading {
+  display: none;
+  text-align: center;
+  padding: 44px 20px;
+}
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  margin: 0 auto 14px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading p { font-size: 0.82rem; color: var(--muted); }
+
+/* ERROR */
+.error-box {
+  display: none;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 11px 14px;
+  font-size: 0.82rem;
+  color: var(--red);
+  margin-bottom: 14px;
+}
+
+/* RESULT */
+#result { display: none; margin-top: 28px; }
+
+/* SCORE HERO */
+.score-hero {
+  background: var(--ink);
+  border-radius: 12px;
+  padding: 22px 22px 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.score-donut { width: 84px; height: 84px; flex-shrink: 0; }
+.score-meta { flex: 1; min-width: 140px; }
+.score-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.8rem;
+  color: #f7f4ef;
+  line-height: 1;
+}
+.score-num small { font-size: 1.1rem; opacity: .5; font-style: italic; }
+.score-level { font-size: 0.8rem; color: #a8a29e; margin-top: 4px; }
+.score-tags { display:flex; gap:8px; flex-wrap:wrap; }
+.stag {
+  font-size: 0.68rem;
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.15);
+  color: #d6d3d1;
+  letter-spacing: 0.05em;
+}
+
+/* RESULT GRID */
+.rgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media(max-width:520px) { .rgrid { grid-template-columns: 1fr; } }
+.rcard { background: var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; box-shadow:var(--shadow); }
+.rcard.full { grid-column: 1/-1; }
+
+/* CARD HEADER */
+.rcard-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.rcard-icon {
+  width: 24px; height: 24px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.ic-green  { background:#dcfce7; color:var(--green); }
+.ic-red    { background:#fee2e2; color:var(--red); }
+.ic-blue   { background:#dbeafe; color:var(--blue); }
+.ic-amber  { background:#fef3c7; color:var(--amber); }
+.ic-purple { background:#ede9fe; color:var(--purple); }
+.ic-dark   { background:#e7e5e4; color:var(--ink); }
+
+.rcard-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.96rem;
+}
+
+/* CHIPS */
+.chips { display:flex; flex-wrap:wrap; gap:7px; }
+.chip {
+  font-size: 0.75rem;
+  padding: 4px 11px;
+  border-radius: 20px;
+  line-height: 1.5;
+}
+.chip-g { background:#dcfce7; color:#166534; }
+.chip-r { background:#fee2e2; color:#991b1b; }
+
+/* VOCAB TABLE */
+.vtable { width:100%; border-collapse:collapse; font-size:0.82rem; }
+.vtable th {
+  text-align:left; font-weight:500; color:var(--muted);
+  font-size:0.67rem; letter-spacing:.09em; text-transform:uppercase;
+  padding:0 0 7px; border-bottom:1px solid var(--border);
+}
+.vtable td { padding:7px 0; border-bottom:1px solid var(--bg); vertical-align:top; line-height:1.55; }
+.vtable td:first-child { font-weight:500; color:var(--blue); width:38%; padding-right:10px; }
+.vtable tr:last-child td { border-bottom:none; }
+.biz-tag {
+  display:inline-block; font-size:0.6rem; font-weight:600;
+  background:#fef3c7; color:var(--amber); border-radius:3px;
+  padding:1px 5px; margin-left:5px; vertical-align:middle;
+  letter-spacing:.05em;
+}
+
+/* GRAMMAR ITEMS */
+.gitem {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--bg);
+  font-size: 0.84rem;
+  line-height: 1.7;
+}
+.gitem:last-child { border-bottom: none; }
+.gitem-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.67rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.gl-tense  { color:var(--purple); }
+.gl-pos    { color:var(--blue); }
+.gl-struct { color:var(--amber); }
+.gl-other  { color:var(--muted); }
+
+/* STRUCTURE DIAGRAM */
+.struct-box {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 0.8rem;
+  line-height: 2;
+  font-family: monospace;
+  margin-top: 6px;
+  overflow-x: auto;
+  white-space: pre;
+  color: var(--ink);
+}
+
+/* ANALYSIS */
+.analysis-body {
+  font-size: 0.86rem;
+  line-height: 1.9;
+  color: var(--ink);
+}
+
+/* MODEL TRANS */
+.model-body {
+  font-size: 0.92rem;
+  line-height: 1.9;
+  border-left: 3px solid var(--amber);
+  padding-left: 14px;
+  font-style: italic;
+  color: var(--ink);
+}
+
+/* IMPROVEMENTS */
+.imp-list { list-style:none; font-size:0.84rem; }
+.imp-list li {
+  padding: 8px 0 8px 22px;
+  border-bottom: 1px solid var(--bg);
+  line-height: 1.65;
+  position: relative;
+}
+.imp-list li:last-child { border-bottom:none; }
+.imp-list li::before {
+  content: '→';
+  position: absolute; left:0;
+  color: var(--red); font-weight:600;
+}
+
+/* RESET BTN */
+.btn-reset {
+  width:100%; padding:13px;
+  background:transparent;
+  border: 1.5px solid var(--border);
+  border-radius:10px;
+  color: var(--muted);
+  font-family:'Outfit',sans-serif;
+  font-size:0.88rem;
+  cursor:pointer;
+  margin-top:14px;
+  transition: border-color .18s, color .18s;
+}
+.btn-reset:hover { border-color:var(--ink); color:var(--ink); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <h1>TOEIC <em>翻訳採点</em></h1>
+    <p class="header-sub">画像をアップして<br>AIが詳細分析</p>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- 問題設定 -->
+  <div class="lbl">問題設定</div>
+  <div class="card">
+    <div class="row">
+      <div>
+        <select id="part">
+          <option value="Part 5">Part 5（短文穴埋め）</option>
+          <option value="Part 6">Part 6（長文穴埋め）</option>
+          <option value="Part 7" selected>Part 7（長文読解）</option>
+        </select>
+      </div>
+      <div style="max-width:130px">
+        <input type="number" id="qnum" placeholder="問題番号" min="1" max="200">
+      </div>
+    </div>
+  </div>
+
+  <!-- 問題画像 -->
+  <div class="lbl">問題の画像</div>
+  <div class="card" style="padding:14px">
+    <div class="upload-zone" id="dropZone">
+      <input type="file" id="imgFile" accept="image/*" onchange="handleFile(this)">
+      <div id="uploadPlaceholder">
+        <div class="upload-icon">📷</div>
+        <div class="upload-hint">
+          <strong>タップ or ドラッグ</strong>で画像をアップロード<br>
+          問題集の写真・スクリーンショットをそのまま使えます
+        </div>
+      </div>
+      <div id="previewWrap">
+        <img id="previewImg" alt="プレビュー">
+        <button class="preview-clear" onclick="clearImage(event)">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 自分の訳 -->
+  <div class="lbl">あなたの訳</div>
+  <div class="card">
+    <textarea id="translation" rows="5"
+      placeholder="自分が訳した日本語を書いてください。&#10;わからなかった部分も「〜のような意味？」と書いておくと、より具体的なフィードバックが得られます。"></textarea>
+  </div>
+
+  <div class="error-box" id="errBox"></div>
+
+  <button class="btn-primary" id="analyzeBtn" onclick="analyze()">採点・分析する</button>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>画像を読み取り、詳細分析中…</p>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result">
+
+    <!-- Score hero -->
+    <div class="score-hero">
+      <svg class="score-donut" viewBox="0 0 84 84">
+        <circle cx="42" cy="42" r="36" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8"/>
+        <circle cx="42" cy="42" r="36" fill="none" stroke="#fbbf24" stroke-width="8"
+          stroke-linecap="round" stroke-dasharray="226.19" stroke-dashoffset="226.19"
+          id="scoreArc" transform="rotate(-90 42 42)"
+          style="transition:stroke-dashoffset 1.3s cubic-bezier(.4,0,.2,1)"/>
+        <text x="42" y="47" text-anchor="middle" fill="#f7f4ef"
+          font-family="Playfair Display,serif" font-size="19" font-weight="700"
+          id="scoreArcTxt">--</text>
+      </svg>
+      <div class="score-meta">
+        <div class="score-num" id="scoreNum">-- <small>/ 100</small></div>
+        <div class="score-level" id="scoreLevel">--</div>
+      </div>
+      <div class="score-tags" id="scoreTags"></div>
+    </div>
+
+    <div class="rgrid">
+
+      <!-- できていたこと -->
+      <div class="rcard">
+        <div class="rcard-head">
+          <span class="rcard-icon ic-green">✓</span>
+          <span class="rcard-title">できていたこと</span>
+        </div>
+        <div class="chips" id="goodChips"></div>
+      </div>
+
+      <!-- 見落とし -->
+      <div class="rcard">
+        <div class="rcard-head">
+          <span class="rcard-icon ic-red">!</span>
+          <span class="rcard-title">見落とし・誤訳</span>
+        </div>
+        <div class="chips" id="missChips"></div>
+      </div>
+
+      <!-- 語彙分析 -->
+      <div class="rcard full">
+        <div class="rcard-head">
+          <span class="rcard-icon ic-blue">語</span>
+          <span class="rcard-title">語彙分析</span>
+        </div>
+        <table class="vtable">
+          <thead><tr><th>単語・表現</th><th>意味・解説</th></tr></thead>
+          <tbody id="vocabBody"></tbody>
+        </table>
+      </div>
+
+      <!-- 文法・構文 -->
+      <div class="rcard full">
+        <div class="rcard-head">
+          <span class="rcard-icon ic-amber">文</span>
+          <span class="rcard-title">文法・構文の分析</span>
+        </div>
+        <div id="grammarList"></div>
+      </div>
+
+      <!-- 品詞・時制の誤り -->
+      <div class="rcard full" id="posErrorCard" style="display:none">
+        <div class="rcard-head">
+          <span class="rcard-icon ic-purple">誤</span>
+          <span class="rcard-title">品詞・時制の誤り指摘</span>
+        </div>
+        <div id="posErrorList"></div>
+      </div>
+
+      <!-- 総合分析 -->
+      <div class="rcard full">
+        <div class="rcard-head">
+          <span class="rcard-icon ic-dark">▸</span>
+          <span class="rcard-title">総合分析</span>
+        </div>
+        <div class="analysis-body" id="analysisText"></div>
+      </div>
+
+      <!-- 模範訳 -->
+      <div class="rcard full">
+        <div class="rcard-head">
+          <span class="rcard-icon ic-amber">★</span>
+          <span class="rcard-title">模範訳</span>
+        </div>
+        <div class="model-body" id="modelText"></div>
+      </div>
+
+      <!-- 改善提案 -->
+      <div class="rcard full">
+        <div class="rcard-head">
+          <span class="rcard-icon ic-red">↑</span>
+          <span class="rcard-title">改善提案・次のステップ</span>
+        </div>
+        <ul class="imp-list" id="impList"></ul>
+      </div>
+
+    </div>
+
+    <button class="btn-reset" onclick="resetAll()">← もう一問やる</button>
+  </div>
+
+</div>
+
+<script>
+let imgBase64 = null;
+let imgType = 'image/jpeg';
+
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) loadFile(f);
+});
+
+function handleFile(input) {
+  const f = input.files[0];
+  if (f) loadFile(f);
+}
+
+function loadFile(file) {
+  imgType = file.type || 'image/jpeg';
+  const reader = new FileReader();
+  reader.onload = e => {
+    imgBase64 = e.target.result.split(',')[1];
+    document.getElementById('previewImg').src = e.target.result;
+    document.getElementById('previewWrap').style.display = 'block';
+    document.getElementById('uploadPlaceholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImage(ev) {
+  ev.stopPropagation();
+  imgBase64 = null;
+  document.getElementById('previewWrap').style.display = 'none';
+  document.getElementById('uploadPlaceholder').style.display = 'block';
+  document.getElementById('imgFile').value = '';
+}
+
+function showErr(msg) {
+  const el = document.getElementById('errBox');
+  el.textContent = msg; el.style.display = 'block';
+}
+function hideErr() { document.getElementById('errBox').style.display = 'none'; }
+
+async function analyze() {
+  const translation = document.getElementById('translation').value.trim();
+  const part = document.getElementById('part').value;
+  const qnum = document.getElementById('qnum').value;
+
+  if (!imgBase64) { showErr('問題の画像をアップロードしてください'); return; }
+  if (!translation) { showErr('あなたの訳を入力してください'); return; }
+  hideErr();
+
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('result').style.display = 'none';
+
+  const qLabel = qnum ? `問題${qnum}番` : '';
+
+  const prompt = `あなたはTOEIC指導の専門家です。
+画像のTOEIC問題（${part}${qLabel ? ' ' + qLabel : ''}）を正確に読み取り、学習者の翻訳を多角的に分析してください。
+
+【学習者の訳】
+${translation}
+
+以下のJSON形式のみで返答。マークダウン・バックティック・前置き不要。
+
+{
+  "score": 0から100の整数,
+  "level": "S/A/B/C/D のいずれか（S:95+ A:80+ B:65+ C:50+ D:50未満）",
+  "level_desc": "レベルの簡単な説明（例: ほぼ完璧な理解）",
+  "good_points": ["できていたこと（2〜4個、具体的に）"],
+  "miss_points": ["見落とし・誤訳（2〜4個、具体的に）"],
+  "vocabulary": [
+    {
+      "word": "単語または表現（原文のまま）",
+      "meaning": "日本語の意味",
+      "explanation": "用法・文脈での意味・派生語など",
+      "is_business": true または false
+    }
+  ],
+  "grammar": [
+    {
+      "type": "tense（時制）/ pos（品詞）/ structure（構文）/ other のどれか",
+      "point": "文法項目名",
+      "sentence": "該当する英文（短く抜粋）",
+      "explanation": "詳細な解説（学習者の訳との対応を含む）",
+      "diagram": "構文図解（任意、SVOや節構造をASCIIで）"
+    }
+  ],
+  "pos_errors": [
+    {
+      "type": "品詞誤り または 時制誤り",
+      "original": "学習者の訳の該当部分",
+      "correct": "正しい解釈",
+      "reason": "なぜ誤りか"
+    }
+  ],
+  "analysis": "総合分析（280〜350字。理解の深さ・弱点・パターンを具体的に）",
+  "model": "模範的な日本語訳（自然で正確な翻訳）",
+  "improvements": ["具体的な改善提案（3〜4個）"]
+}`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: imgType, data: imgBase64 } },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+    const data = await resp.json();
+    if (data.error) throw new Error('API: ' + data.error.message);
+    const raw = (data.content || []).map(b => b.text || '').join('').trim();
+    const stripped = raw.replace(/^```json\s*/,'').replace(/```\s*$/,'').trim();
+    const jsonMatch = stripped.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('レスポンス解析エラー');
+    const parsed = JSON.parse(jsonMatch[0]);
+    renderResult(parsed);
+  } catch(e) {
+    showErr('エラー: ' + e.message + ' — もう一度お試しください');
+    console.error(e);
+  } finally {
+    document.getElementById('analyzeBtn').disabled = false;
+    document.getElementById('loading').style.display = 'none';
+  }
+}
+
+function renderResult(d) {
+  const score = Math.max(0, Math.min(100, d.score || 0));
+  const circ = 226.19;
+  const offset = circ * (1 - score / 100);
+
+  document.getElementById('scoreArc').style.strokeDashoffset = offset;
+  document.getElementById('scoreArc').setAttribute('stroke',
+    score >= 80 ? '#86efac' : score >= 60 ? '#fbbf24' : '#f87171');
+  document.getElementById('scoreArcTxt').textContent = score;
+  document.getElementById('scoreNum').innerHTML = `${score} <small>/ 100</small>`;
+  document.getElementById('scoreLevel').textContent = `${d.level || ''} — ${d.level_desc || ''}`;
+
+  const tagsEl = document.getElementById('scoreTags');
+  tagsEl.innerHTML = (d.good_points || []).slice(0,2).map(t =>
+    `<span class="stag">✓ ${t}</span>`).join('');
+
+  // Chips
+  document.getElementById('goodChips').innerHTML =
+    (d.good_points || []).map(t => `<span class="chip chip-g">✓ ${t}</span>`).join('');
+  document.getElementById('missChips').innerHTML =
+    (d.miss_points || []).map(t => `<span class="chip chip-r">△ ${t}</span>`).join('');
+
+  // Vocab
+  document.getElementById('vocabBody').innerHTML =
+    (d.vocabulary || []).map(v => `
+      <tr>
+        <td>${v.word}${v.is_business ? '<span class="biz-tag">BIZ</span>' : ''}</td>
+        <td><strong>${v.meaning}</strong><br><span style="color:var(--muted);font-size:0.78rem">${v.explanation || ''}</span></td>
+      </tr>`).join('');
+
+  // Grammar
+  const typeClass = { tense:'gl-tense', pos:'gl-pos', structure:'gl-struct', other:'gl-other' };
+  const typeLabel = { tense:'時制', pos:'品詞', structure:'構文', other:'文法' };
+  document.getElementById('grammarList').innerHTML =
+    (d.grammar || []).map(g => `
+      <div class="gitem">
+        <div class="gitem-label ${typeClass[g.type] || 'gl-other'}">
+          ${typeLabel[g.type] || '文法'} · ${g.point}
+        </div>
+        <div style="font-size:0.78rem;color:var(--muted);margin-bottom:3px;font-style:italic">${g.sentence || ''}</div>
+        <div>${g.explanation || ''}</div>
+        ${g.diagram ? `<div class="struct-box">${g.diagram}</div>` : ''}
+      </div>`).join('');
+
+  // POS errors
+  const posErrors = d.pos_errors || [];
+  const posCard = document.getElementById('posErrorCard');
+  if (posErrors.length > 0) {
+    posCard.style.display = '';
+    document.getElementById('posErrorList').innerHTML =
+      posErrors.map(e => `
+        <div class="gitem">
+          <div class="gitem-label" style="color:var(--purple)">${e.type}</div>
+          <div><span style="color:var(--red);text-decoration:line-through">${e.original}</span>
+            → <span style="color:var(--green);font-weight:500">${e.correct}</span></div>
+          <div style="font-size:0.8rem;color:var(--muted);margin-top:2px">${e.reason}</div>
+        </div>`).join('');
+  } else {
+    posCard.style.display = 'none';
+  }
+
+  document.getElementById('analysisText').textContent = d.analysis || '';
+  document.getElementById('modelText').textContent = d.model || '';
+  document.getElementById('impList').innerHTML =
+    (d.improvements || []).map(i => `<li>${i}</li>`).join('');
+
+  const resultEl = document.getElementById('result');
+  resultEl.style.display = 'block';
+  setTimeout(() => resultEl.scrollIntoView({ behavior:'smooth', block:'start' }), 60);
+}
+
+function resetAll() {
+  document.getElementById('translation').value = '';
+  document.getElementById('qnum').value = '';
+  clearImage({ stopPropagation: () => {} });
+  document.getElementById('result').style.display = 'none';
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+</script>
+</body>
+</html>
